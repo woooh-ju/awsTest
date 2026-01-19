@@ -157,10 +157,77 @@ const deleteSeminar = async (req, res) => {
   }
 };
 
+// 세미나 검색
+const searchSeminars = async (req, res) => {
+  try {
+    const { keyword, speaker, location, startDate, endDate } = req.query;
+    let query = 'SELECT * FROM seminars WHERE 1=1';
+    let params = [];
+
+    // 키워드 검색 (제목, 설명)
+    if (keyword) {
+      query += ' AND (title LIKE ? OR description LIKE ?)';
+      const searchKeyword = `%${keyword}%`;
+      params.push(searchKeyword, searchKeyword);
+    }
+
+    // 강사 이름으로 검색
+    if (speaker) {
+      query += ' AND speaker LIKE ?';
+      params.push(`%${speaker}%`);
+    }
+
+    // 장소로 검색
+    if (location) {
+      query += ' AND location LIKE ?';
+      params.push(`%${location}%`);
+    }
+
+    // 날짜 범위 검색
+    if (startDate) {
+      query += ' AND date >= ?';
+      params.push(startDate);
+    }
+
+    if (endDate) {
+      query += ' AND date <= ?';
+      params.push(endDate);
+    }
+
+    // 정렬
+    query += ' ORDER BY date DESC';
+
+    const connection = await pool.getConnection();
+    const [seminars] = await connection.query(query, params);
+    connection.release();
+
+    res.status(200).json({
+      success: true,
+      data: seminars,
+      count: seminars.length,
+      searchParams: {
+        keyword: keyword || null,
+        speaker: speaker || null,
+        location: location || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+      },
+    });
+  } catch (error) {
+    console.error('Error searching seminars:', error);
+    res.status(500).json({
+      success: false,
+      message: '세미나 검색 실패',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllSeminars,
   getSeminarById,
   createSeminar,
   updateSeminar,
   deleteSeminar,
+  searchSeminars,
 };

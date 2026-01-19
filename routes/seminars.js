@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const seminarController = require('../controllers/seminarController');
 
+// 세미나 검색 (쿼리 파라미터를 사용하는 경우)
+router.get('/search', seminarController.searchSeminars);
+
 // 모든 세미나 조회
 router.get('/', seminarController.getAllSeminars);
 
